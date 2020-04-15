@@ -6,6 +6,11 @@ public class PlayerController : MonoBehaviour
 {
     private Rigidbody playerRigidBody;
     private Animator playerAnim;
+    public ParticleSystem obstacleExplosion;
+    public ParticleSystem dirtSplat;
+    public AudioClip jumpSound;
+    public AudioClip explosionSound;
+    private AudioSource audioSource;
     public float forceMultiplier;
     public float gravityMultiplier;
     public bool onGround = true;
@@ -16,6 +21,7 @@ public class PlayerController : MonoBehaviour
     {
         playerRigidBody = GetComponent<Rigidbody>();
         playerAnim = GetComponent<Animator>();
+        audioSource = GetComponent<audioSource>();
         Physics.gravity *= gravityMultiplier;
     }
 
@@ -26,7 +32,9 @@ public class PlayerController : MonoBehaviour
         {
             playerRigidBody.AddForce(Vector3.up * forceMultiplier, ForceMode.Impulse);
             onGround = false;
+            dirtSplat.Stop();
             playerAnim.SetTrigger("Jump_trig");
+            audioSource.PlayOneShot(jumpSound, 1.0f);
         }
 
     }
@@ -34,18 +42,22 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         //game over if the player hits an obstacle
-        if (collision.gameObject.CompareTag("Ground"))
+        if (collision.gameObject.CompareTag("Obstacle"))
         {
-            onGround = true;
-        }
-
-        //set on ground state to true if we hit the ground
-        else if (collision.gameObject.CompareTag("Obstacle"))
-        {
+            dirtSplat.Stop();
             gameOver = true;
+            obstacleExplosion.Play();
             Debug.Log("Game Over");
             playerAnim.SetBool("Death_b", true);
             playerAnim.SetInteger("DeathType_int", 1);
+            audioSource.PlayOneShot(explosionSound, 1.0f);
+        }
+
+        //set on ground state to true if we hit the ground
+        else if (collision.gameObject.CompareTag("Ground"))
+        {
+            onGround = true;
+            dirtSplat.Play();
         }
     }
 }
